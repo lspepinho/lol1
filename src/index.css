@@ -1,0 +1,25 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-mono: "Courier New", Courier, monospace;
+  --font-pokemon: "Press Start 2P", system-ui, sans-serif;
+}
+
+body {
+  background-color: #18181b;
+  color: #f4f4f5;
+  overflow: hidden;
+}
+
+/* Custom scrollbar for retro feel if needed */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #27272a;
+}
+::-webkit-scrollbar-thumb {
+  background: #52525b;
+  border-radius: 4px;
+}
