@@ -4,7 +4,7 @@ import { ChevronRight, Sparkles, Home, TreeDeciduous, MapPin, Settings, ArrowUp,
 import { GoogleGenAI, Type } from '@google/genai';
 
 // --- Types ---
-type GameState = 'EXPLORE' | 'DIALOGUE' | 'POKEMON_CHOICE' | 'BATTLE_CHOICE' | 'FINISHED' | 'BATTLE' | 'LEVEL_EDITOR';
+type GameState = 'EXPLORE' | 'DIALOGUE' | 'POKEMON_CHOICE' | 'BATTLE_CHOICE' | 'FINAL_BATTLE_CHOICE' | 'FINISHED' | 'BATTLE' | 'LEVEL_EDITOR' | 'CREDITS';
 
 interface Dialogue {
   speaker: string;
@@ -99,7 +99,9 @@ const POKEMON_DATA = {
   Bulbasaur: { hp: 25, moves: ['Tackle', 'Vine Whip'] },
   Charmander: { hp: 20, moves: ['Scratch', 'Ember'] },
   Squirtle: { hp: 22, moves: ['Tackle', 'Water Gun'] },
-  Missingno: { hp: 999, moves: ['Water Gun', 'Sky Attack', 'Pay Day', 'Fly'] }
+  Missingno: { hp: 999, moves: ['Water Gun', 'Sky Attack', 'Pay Day', 'Fly'] },
+  Treinador: { hp: 50, moves: ['Hyper Beam', 'Psychic'] },
+  GYM_LEADER: { hp: 100, moves: ['Thunderbolt', 'Flamethrower', 'Razor Leaf'], sprite: "./friend.png" }
 };
 
 interface PokemonDetails {
@@ -115,12 +117,34 @@ export const getPokemonData = async (name: string): Promise<PokemonDetails> => {
   const lowerName = name.toLowerCase();
   if (pokemonCache[lowerName]) return pokemonCache[lowerName];
   
+  if (lowerName === 'treinador') {
+    const details = {
+      hp: POKEMON_DATA.Treinador.hp,
+      moves: POKEMON_DATA.Treinador.moves,
+      sprite: SPRITES.friend,
+      backSprite: SPRITES.friend
+    };
+    pokemonCache[lowerName] = details;
+    return details;
+  }
+
   if (lowerName === 'missingno') {
     const details = {
       hp: POKEMON_DATA.Missingno.hp,
       moves: POKEMON_DATA.Missingno.moves,
       sprite: SPRITES.missingno,
       backSprite: SPRITES.missingno_back
+    };
+    pokemonCache[lowerName] = details;
+    return details;
+  }
+
+  if (lowerName === 'gym_leader') {
+    const details = {
+      hp: POKEMON_DATA.GYM_LEADER.hp,
+      moves: POKEMON_DATA.GYM_LEADER.moves,
+      sprite: SPRITES.friend,
+      backSprite: SPRITES.friend
     };
     pokemonCache[lowerName] = details;
     return details;
@@ -261,6 +285,44 @@ const LEVEL_4_MAP_DATA: MapTileData[][] = [
   [1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1], // Saída (Base)
 ].map(row => row.map(type => ({ type, rotation: 0, hasBattle: false })));
 
+const LEVEL_5_MAP_DATA: MapTileData[][] = [
+  [1, 1, 1, 1, 1, 1, 1, 9, 1, 1, 1, 1, 1, 1, 1], // Entrance from forest
+  [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+  [5, 5, 10, 5, 5, 5, 5, 5, 5, 5, 10, 5, 5, 5, 5],
+  [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+  [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+  [5, 5, 10, 5, 5, 5, 5, 5, 5, 5, 10, 5, 5, 5, 5],
+  [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+  [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+  [5, 5, 10, 5, 5, 5, 5, 5, 5, 5, 10, 5, 5, 5, 5],
+  [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+  [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+  [5, 5, 13, 5, 5, 5, 5, 5, 5, 5, 14, 5, 5, 5, 5],
+  [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+  [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+  [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+  [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+  [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+  [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+  [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+  [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+  [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+  [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+  [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+  [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+  [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+  [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+  [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+  [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+  [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+  [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+].map(row => row.map(type => ({ type, rotation: 0, hasBattle: false })));
+
+// Adicionando o treinador na frente do ginásio (x: 6, y: 21)
+LEVEL_5_MAP_DATA[21][6] = { type: 17, rotation: 0, hasBattle: true, pokemonName: 'Treinador' };
+// Ginásio rotacionado 180 graus (x: 6, y: 22)
+LEVEL_5_MAP_DATA[22][6] = { type: 11, rotation: 180, hasBattle: false };
+
 const Tile = React.memo(({ data, x, y, mapData }: { data: MapTileData, x: number, y: number, mapData?: MapTileData[][] }) => {
   const [frame, setFrame] = useState(0);
 
@@ -313,7 +375,7 @@ const Tile = React.memo(({ data, x, y, mapData }: { data: MapTileData, x: number
   } else if (data.type === 16) {
     bgImage = '';
   } else if (data.type === 17) {
-    bgImage = SPRITES.pokebola; // Use pokeball sprite for now
+    bgImage = data.pokemonName === 'Treinador' ? SPRITES.friend : SPRITES.pokebola;
   } else if (data.type === 18) {
     bgImage = SPRITES.labpereira;
   }
@@ -354,6 +416,20 @@ const Tile = React.memo(({ data, x, y, mapData }: { data: MapTileData, x: number
             backgroundSize: 'cover',
             imageRendering: 'pixelated',
             backgroundRepeat: 'no-repeat'
+          }}
+        />
+      )}
+
+      {/* Main Tile Image with Rotation */}
+      {bgImage && (
+        <div 
+          className="absolute inset-0" 
+          style={{
+            backgroundImage: `url(${bgImage})`,
+            backgroundSize: 'cover',
+            imageRendering: 'pixelated',
+            backgroundRepeat: 'no-repeat',
+            transform: data.rotation ? `rotate(${data.rotation}deg)` : 'none'
           }}
         />
       )}
@@ -521,6 +597,8 @@ export default function App() {
   const [currentOpponentAbilities, setCurrentOpponentAbilities] = useState('Tackle, Scratch');
   const [isOpponentTurn, setIsOpponentTurn] = useState(false);
   const [pendingOpponent, setPendingOpponent] = useState<string | null>(null);
+  const [selectedTeam, setSelectedTeam] = useState<string[]>([]);
+  const [isFinalBattle, setIsFinalBattle] = useState(false);
   const [apiKeyIndex, setApiKeyIndex] = useState(0);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [showCollisions, setShowCollisions] = useState(false);
@@ -539,6 +617,15 @@ export default function App() {
       setShowApiKeyPrompt(true);
     }
   }, [activeApiKeys.length]);
+
+  useEffect(() => {
+    if (gameState === 'FINISHED') {
+      const timer = setTimeout(() => {
+        setGameState('CREDITS');
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [gameState]);
 
   const [playerPkmnDetails, setPlayerPkmnDetails] = useState<PokemonDetails | null>(null);
   const [opponentPkmnDetails, setOpponentPkmnDetails] = useState<PokemonDetails | null>(null);
@@ -684,7 +771,11 @@ export default function App() {
   // --- Movement Logic ---
   const startBattle = useCallback(async (opponentName: string = 'Charmander') => {
     setPendingOpponent(opponentName);
-    setGameState('BATTLE_CHOICE');
+    if (opponentName === 'GYM_LEADER') {
+      setGameState('FINAL_BATTLE_CHOICE');
+    } else {
+      setGameState('BATTLE_CHOICE');
+    }
   }, []);
 
   const confirmBattle = useCallback(async (opponentName: string, playerPkmnName: string) => {
@@ -715,20 +806,34 @@ export default function App() {
     if (activeApiKeys.length > 0) {
       try {
         const ai = new GoogleGenAI({ apiKey: activeApiKeys[apiKeyIndex] });
-        chatRef.current = ai.chats.create({
-          model: "gemini-3.1-flash-lite-preview",
-          config: {
-            systemInstruction: `You are a text-based RPG narrator for a Pokémon battle. This is an English learning game for 8th-grade students. 
+        const systemInstruction = opponentName === 'GYM_LEADER' 
+          ? `You are a text-based RPG narrator for the FINAL BOSS BATTLE in a Pokémon Gym. This is an English learning game for 8th-grade students. 
 CRITICAL RULES:
 1. You MUST speak ONLY in English.
 2. You MUST perfectly model the difference between "Will" (for immediate actions, spontaneous decisions, or predictions without evidence) and "Going to" (for planned intentions or predictions with clear present evidence).
 3. GRAMMAR DODGE MECHANIC: If the player tries to use "will" or "going to" in their command but uses the WRONG ONE based on the context (e.g., using "will" for a planned strategy, or "going to" for a sudden reaction), their attack MUST MISS and the opponent MUST DODGE. Explain that the attack missed because of the grammar mistake.
 4. If they use "will" or "going to" CORRECTLY, make their attack very successful and praise their grammar!
 5. BATTLE FLOW: Every turn, after the player's action, the opponent MUST counter-attack.
+6. The player has a TEAM of 3 Pokémon: ${selectedTeam.join(', ')}. They can switch between them or use them together in narration.
+7. The opponent is the GYM LEADER with a TEAM of 3: Pikachu, Charmander, and Bulbasaur.
+8. The battle is 3v3. Narrate the epic scale of this final confrontation.
+9. You must return your response in JSON format matching the schema. Update the HP and inventory based on the turn's events. The opponent's total team HP is ${oDetails.hp}. The player's total team HP is ${pDetails.hp}.`
+          : `You are a text-based RPG narrator for a Pokémon battle. This is an English learning game for 8th-grade students. 
+CRITICAL RULES:
+1. You MUST speak ONLY in English.
+2. You MUST perfectly model the difference between "Will" (for immediate actions, spontaneous decisions, or predictions without evidence) and "Going to" (for planned intentions or predictions with clear present evidence).
+3. GRAMMAR DODGE MECHANIC: If the player tries to use "will" or "going to" in their command but uses the WRONG ONE based on the context (e.g., using "will" for a planned strategy, or "sudden reaction), their attack MUST MISS and the opponent MUST DODGE. Explain that the attack missed because of the grammar mistake.
+4. If they use "will" or "going to" CORRECTLY, make their attack very successful and praise their grammar!
+5. BATTLE FLOW: Every turn, after the player's action, the opponent MUST counter-attack.
 6. For all OTHER words, accept broken English, typos, and simple vocabulary. Only be strict about "will" vs "going to".
 7. The player's Pokémon is ${playerPkmnName}. It only knows these moves: ${pDetails.moves.join(', ')}. If the player tries to use a move it doesn't know, the attack fails.
 8. The player has Potions (heals 10 HP) and Pokeballs (catches Pokemon).
-9. You must return your response in JSON format matching the schema. Update the HP and inventory based on the turn's events. The opponent is ${safeOpponentName} and has abilities: ${oDetails.moves.join(', ')}. The opponent's max HP is ${oDetails.hp}. ${playerPkmnName}'s max HP is ${pDetails.hp}.`,
+9. You must return your response in JSON format matching the schema. Update the HP and inventory based on the turn's events. The opponent is ${safeOpponentName} and has abilities: ${oDetails.moves.join(', ')}. The opponent's max HP is ${oDetails.hp}. ${playerPkmnName}'s max HP is ${pDetails.hp}.`;
+
+        chatRef.current = ai.chats.create({
+          model: "gemini-3.1-flash-lite-preview",
+          config: {
+            systemInstruction,
             responseMimeType: "application/json",
             responseSchema: {
               type: Type.OBJECT,
@@ -750,7 +855,97 @@ CRITICAL RULES:
         console.error("Failed to init chat", e);
       }
     }
-  }, [apiKeyIndex]);
+  }, [activeApiKeys, apiKeyIndex, currentLevel, selectedTeam]);
+
+  const confirmFinalBattle = useCallback(async () => {
+    if (selectedTeam.length < 1) return;
+    setIsFinalBattle(true);
+    
+    setIsStartingBattle(true);
+    setSelectedPokemon(selectedTeam[0]); // Main sprite
+    
+    // Fetch details for all 3
+    const teamDetails = await Promise.all(selectedTeam.map(name => getPokemonData(name)));
+    const combinedMoves = Array.from(new Set(teamDetails.flatMap(d => d.moves)));
+    const combinedHP = Math.min(120, teamDetails.reduce((sum, d) => sum + d.hp, 0));
+    
+    const pDetails = {
+      ...teamDetails[0],
+      hp: combinedHP,
+      moves: combinedMoves
+    };
+    
+    const oDetails = await getPokemonData('GYM_LEADER');
+    
+    setPlayerPkmnDetails(pDetails);
+    setOpponentPkmnDetails(oDetails);
+
+    setPlayerHP(pDetails.hp);
+    setMaxPlayerHP(pDetails.hp);
+    
+    const safeOpponentName = 'GYM_LEADER';
+    setOpponentHP(oDetails.hp);
+    setCurrentOpponent(safeOpponentName);
+    setCurrentOpponentSprite(oDetails.sprite);
+    setCurrentOpponentAbilities(oDetails.moves.join(', '));
+    
+    setBattleLog([{ role: 'model', text: `GYM LEADER wants to battle! What will your team do?` }]);
+    setGameState('BATTLE');
+    setBattleInput('');
+    setIsOpponentTurn(false);
+    setIsStartingBattle(false);
+
+    if (activeApiKeys.length > 0) {
+      try {
+        const ai = new GoogleGenAI({ apiKey: activeApiKeys[apiKeyIndex] });
+        const systemInstruction = `You are a text-based RPG narrator for the FINAL BOSS BATTLE in a Pokémon Gym. This is an English learning game for 8th-grade students. 
+CRITICAL RULES:
+1. You MUST speak ONLY in English.
+2. You MUST perfectly model the difference between "Will" (for immediate actions, spontaneous decisions, or predictions without evidence) and "Going to" (for planned intentions or predictions with clear present evidence).
+3. GRAMMAR DODGE MECHANIC: If the player tries to use "will" or "going to" in their command but uses the WRONG ONE based on the context (e.g., using "will" for a planned strategy, or "going to" for a sudden reaction), their attack MUST MISS and the opponent MUST DODGE. Explain that the attack missed because of the grammar mistake.
+4. If they use "will" or "going to" CORRECTLY, make their attack very successful and praise their grammar!
+5. BATTLE FLOW: Every turn, after the player's action, the opponent MUST counter-attack.
+6. The player has a TEAM of 3 Pokémon: ${selectedTeam.join(', ')}. They can switch between them or use them together in narration. Their combined moves are: ${combinedMoves.join(', ')}.
+7. The opponent is the GYM LEADER with a TEAM of 3: Pikachu, Charmander, and Bulbasaur.
+8. The battle is 3v3. Narrate the epic scale of this final confrontation.
+9. You must return your response in JSON format matching the schema. Update the HP and inventory based on the turn's events. The opponent's total team HP is ${oDetails.hp}. The player's total team HP is ${pDetails.hp}.`;
+
+        chatRef.current = ai.chats.create({
+          model: "gemini-3.1-flash-lite-preview",
+          config: {
+            systemInstruction,
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                playerNarration: { type: Type.STRING, description: "Short summary of the player's action and if it hit/missed (max 2 sentences)." },
+                opponentNarration: { type: Type.STRING, description: "Short summary of the opponent's counter-attack (max 2 sentences)." },
+                playerHP: { type: Type.INTEGER, description: "Player's current HP after the turn." },
+                opponentHP: { type: Type.INTEGER, description: "Opponent's current HP after the turn." },
+                potionsLeft: { type: Type.INTEGER, description: "Number of potions remaining." },
+                pokeballsLeft: { type: Type.INTEGER, description: "Number of pokeballs remaining." },
+                battleEnded: { type: Type.BOOLEAN, description: "True if the opponent is caught, defeated, or player runs." },
+                isCaught: { type: Type.BOOLEAN, description: "True if the player successfully used a Pokeball and caught the opponent." }
+              },
+              required: ["playerNarration", "opponentNarration", "playerHP", "opponentHP", "potionsLeft", "pokeballsLeft", "battleEnded"]
+            }
+          }
+        });
+      } catch (e) {
+        console.error("Failed to init chat", e);
+      }
+    }
+  }, [selectedTeam, activeApiKeys, apiKeyIndex]);
+
+  const toggleTeamMember = (name: string) => {
+    setSelectedTeam(prev => {
+      if (prev.includes(name)) {
+        return prev.filter(n => n !== name);
+      }
+      if (prev.length >= 3) return prev;
+      return [...prev, name];
+    });
+  };
 
   const handleInteract = useCallback(() => {
     if (currentLevel === 1) {
@@ -780,7 +975,7 @@ CRITICAL RULES:
     if (facing === 'left') targetX -= 1;
     if (facing === 'right') targetX += 1;
 
-    if (targetX < 0 || targetX >= GRID_SIZE || targetY < 0 || targetY >= GRID_SIZE) return;
+    if (targetX < 0 || targetX >= mapData[0].length || targetY < 0 || targetY >= mapData.length) return;
 
     const targetTile = mapData[targetY][targetX];
 
@@ -847,7 +1042,7 @@ CRITICAL RULES:
     const newY = playerPos.y + dy;
 
     // Level Transitions
-    if (currentLevel === 0 && storyStep >= 6 && newY >= GRID_SIZE && newX === 7) {
+    if (currentLevel === 0 && storyStep >= 6 && newY >= mapData.length && newX === 7) {
       setTimeout(() => {
         setCurrentLevel(2);
         setMapData(LEVEL_2_MAP_DATA);
@@ -862,14 +1057,14 @@ CRITICAL RULES:
       setTimeout(() => {
         setCurrentLevel(0);
         setMapData(INITIAL_MAP_DATA);
-        setPlayerPos({ x: 7, y: 14 });
-        setFriendPos({ x: 7, y: 15 });
+        setPlayerPos({ x: 7, y: INITIAL_MAP_DATA.length - 1 });
+        setFriendPos({ x: 7, y: INITIAL_MAP_DATA.length });
         setIsMoving(false);
       }, 250);
       return;
     }
 
-    if (currentLevel === 2 && newY >= GRID_SIZE && newX === 7) {
+    if (currentLevel === 2 && newY >= mapData.length && newX === 7) {
       setTimeout(() => {
         setCurrentLevel(3);
         setMapData(LEVEL_3_MAP_DATA);
@@ -880,7 +1075,7 @@ CRITICAL RULES:
       return;
     }
 
-    if (currentLevel === 3 && newY >= GRID_SIZE && newX === 7) {
+    if (currentLevel === 3 && newY >= mapData.length && newX === 7) {
       setTimeout(() => {
         setCurrentLevel(4);
         setMapData(LEVEL_4_MAP_DATA);
@@ -891,9 +1086,12 @@ CRITICAL RULES:
       return;
     }
 
-    if (currentLevel === 4 && newY >= GRID_SIZE && newX === 7) {
+    if (currentLevel === 4 && newY >= mapData.length && newX === 7) {
       setTimeout(() => {
-        setGameState('FINISHED');
+        setCurrentLevel(5);
+        setMapData(LEVEL_5_MAP_DATA);
+        setPlayerPos({ x: 7, y: 0 });
+        setFriendPos({ x: 7, y: -1 });
         setIsMoving(false);
       }, 250);
       return;
@@ -902,25 +1100,26 @@ CRITICAL RULES:
     if (currentLevel >= 3 && newY < 0 && newX === 7) {
       setTimeout(() => {
         const prevLevel = currentLevel - 1;
-        const prevMap = prevLevel === 2 ? LEVEL_2_MAP_DATA : LEVEL_3_MAP_DATA;
+        const prevMap = prevLevel === 2 ? LEVEL_2_MAP_DATA : prevLevel === 3 ? LEVEL_3_MAP_DATA : LEVEL_4_MAP_DATA;
         setCurrentLevel(prevLevel);
         setMapData(prevMap);
-        setPlayerPos({ x: 7, y: GRID_SIZE - 1 });
-        setFriendPos({ x: 7, y: GRID_SIZE });
+        setPlayerPos({ x: 7, y: prevMap.length - 1 });
+        setFriendPos({ x: 7, y: prevMap.length });
         setIsMoving(false);
       }, 250);
       return;
     }
 
     // Boundary & Collision Check
-    if (newX < 0 || newX >= GRID_SIZE || newY < 0 || newY >= GRID_SIZE) {
+    if (newX < 0 || newX >= mapData[0].length || newY < 0 || newY >= mapData.length) {
       setTimeout(() => setIsMoving(false), 150);
       return;
     }
     
     const targetType = mapData[newY][newX].type;
     // 1: Tree, 2: Rock, 4: Water, 7: Sign, 8: Pokeball, 10-14: Buildings, 15: Arbusto, 16: Invisible Wall, 18: Lab Pereira
-    let isBlocked = [1, 2, 4, 7, 8, 10, 11, 12, 13, 14, 15, 16, 18].includes(targetType);
+    // Tile 11 (Gym) is no longer blocked so the player can "enter" it
+    let isBlocked = [1, 2, 4, 7, 8, 10, 12, 13, 14, 15, 16, 18].includes(targetType);
 
     // Friend Collision (Only if not following)
     const isFollowing = (currentLevel === 0 && storyStep >= 6) || currentLevel >= 2;
@@ -929,13 +1128,28 @@ CRITICAL RULES:
     }
 
     if (!isBlocked) {
+      // Trigger Final Battle when entering Gym area (5x5 around anchor)
+      let isEnteringGym = false;
+      if (currentLevel === 5) {
+        // Gym is anchored at [22][6], covers y: 18-22, x: 6-10
+        if (newY >= 18 && newY <= 22 && newX >= 6 && newX <= 10) {
+          isEnteringGym = true;
+        }
+      } else if (targetType === 11) {
+        isEnteringGym = true;
+      }
+
+      if (isEnteringGym) {
+        setTimeout(() => startBattle('GYM_LEADER'), 300);
+      }
+
       // Check if inside any building's area (buildings are anchored at bottom-left)
       // Buildings 10-14 are 5x5, Lab 18 is 6x4
       for (let dy = 0; dy <= 4; dy++) {
         for (let dx = 0; dx <= 5; dx++) {
           const checkY = newY + dy;
           const checkX = newX - dx;
-          if (checkY >= 0 && checkY < GRID_SIZE && checkX >= 0 && checkX < GRID_SIZE) {
+          if (checkY >= 0 && checkY < mapData.length && checkX >= 0 && checkX < mapData[0].length) {
             const bType = mapData[checkY][checkX].type;
             if (bType >= 10 && bType <= 14) {
               if (dx <= 4 && dy <= 4) {
@@ -1031,7 +1245,7 @@ CRITICAL RULES:
         // Remove the tile so it doesn't trigger again
         const newMapData = [...mapData];
         newMapData[playerPos.y] = [...newMapData[playerPos.y]];
-        newMapData[playerPos.y][playerPos.x] = { ...tile, type: 0 };
+        newMapData[playerPos.y][playerPos.x] = { ...tile, type: currentLevel === 5 ? 5 : 0 };
         setMapData(newMapData);
 
         setTimeout(() => {
@@ -1075,10 +1289,23 @@ CRITICAL RULES:
           const oDetails = opponentPkmnDetails || await getPokemonData(currentOpponent);
 
           // Always recreate chat if we are retrying or if it's the first time
-          chatRef.current = ai.chats.create({
-            model: model,
-            config: {
-              systemInstruction: `You are a text-based RPG narrator for a Pokémon battle. This is an English learning game for 8th-grade students. 
+          const systemInstruction = isFinalBattle ? `You are a text-based RPG narrator for the FINAL BOSS BATTLE in a Pokémon Gym. This is an English learning game for 8th-grade students. 
+CRITICAL RULES:
+1. You MUST speak ONLY in English.
+2. You MUST perfectly model the difference between "Will" (for immediate actions, spontaneous decisions, or predictions without evidence) and "Going to" (for planned intentions or predictions with clear present evidence).
+3. GRAMMAR DODGE MECHANIC: If the player tries to use "will" or "going to" in their command but uses the WRONG ONE based on the context (e.g., using "will" for a planned strategy, or "going to" for a sudden reaction), their attack MUST MISS and the opponent MUST DODGE. Explain that the attack missed because of the grammar mistake.
+4. If they use "will" or "going to" CORRECTLY, make their attack very successful and praise their grammar!
+5. BATTLE FLOW: Every turn, after the player's action, the opponent MUST counter-attack.
+6. The player has a TEAM of 3 Pokémon: ${selectedTeam.join(', ')}. They can switch between them or use them together in narration. Their combined moves are: ${pDetails.moves.join(', ')}. If the player tries to use a move they don't know, the attack fails.
+7. The opponent is the GYM LEADER with a TEAM of 3: Pikachu, Charmander, and Bulbasaur.
+8. The battle is 3v3. Narrate the epic scale of this final confrontation.
+9. You must return your response in JSON format matching the schema. Update the HP and inventory based on the turn's events. The opponent's total team HP is ${oDetails.hp}. The player's total team HP is ${pDetails.hp}.
+10. SPECIAL ACTIONS:
+    - FLED: If the player wants to run away, set "isFled" to true and "battleEnded" to true.
+    - CAUGHT: If the player uses a Pokeball and succeeds, set "isCaught" to true and "battleEnded" to true.
+    - DEFEATED: If the opponent's HP reaches 0, set "isDefeated" to true and "battleEnded" to true.
+    - STUNNED: If the player's attack stuns the opponent (e.g., using a move that causes paralysis or confusion), set "isStunned" to true. If "isStunned" is true, the opponent will NOT attack this turn (make opponentNarration reflect this).
+11. HP RULES: If an attack misses or fails, the target's HP MUST NOT decrease. If an attack hits, the target's HP MUST decrease.` : `You are a text-based RPG narrator for a Pokémon battle. This is an English learning game for 8th-grade students. 
 CRITICAL RULES:
 1. You MUST speak ONLY in English.
 2. You MUST perfectly model the difference between "Will" (for immediate actions, spontaneous decisions, or predictions without evidence) and "Going to" (for planned intentions or predictions with clear present evidence).
@@ -1094,7 +1321,12 @@ CRITICAL RULES:
     - CAUGHT: If the player uses a Pokeball and succeeds, set "isCaught" to true and "battleEnded" to true.
     - DEFEATED: If the opponent's HP reaches 0, set "isDefeated" to true and "battleEnded" to true.
     - STUNNED: If the player's attack stuns the opponent (e.g., using a move that causes paralysis or confusion), set "isStunned" to true. If "isStunned" is true, the opponent will NOT attack this turn (make opponentNarration reflect this).
-11. HP RULES: If an attack misses or fails, the target's HP MUST NOT decrease. If an attack hits, the target's HP MUST decrease.`,
+11. HP RULES: If an attack misses or fails, the target's HP MUST NOT decrease. If an attack hits, the target's HP MUST decrease.`;
+
+          chatRef.current = ai.chats.create({
+            model: model,
+            config: {
+              systemInstruction: systemInstruction,
               responseMimeType: "application/json",
               responseSchema: {
                 type: Type.OBJECT,
@@ -1168,7 +1400,18 @@ CRITICAL RULES:
                   }
                 }
                 setTimeout(() => {
-                  setGameState('EXPLORE');
+                  if (currentLevel === 5 && currentOpponent === 'GYM_LEADER') {
+                    setGameState('FINISHED');
+                  } else if (currentLevel === 5 && currentOpponent === 'Treinador') {
+                    setStoryStep(7);
+                    setDialogueQueue([
+                      { speaker: "Organizador", text: "Parabéns Red! Você venceu o melhor treinador pokémon!" }
+                    ]);
+                    setDialogueIndex(0);
+                    setGameState('DIALOGUE');
+                  } else {
+                    setGameState('EXPLORE');
+                  }
                 }, 4000);
               }
               return;
@@ -1210,11 +1453,15 @@ CRITICAL RULES:
     if (dialogueIndex < dialogueQueue.length - 1) {
       setDialogueIndex(prev => prev + 1);
     } else {
-      setGameState('EXPLORE');
-      if (currentLevel === 1 && storyStep === 5) {
-        setCurrentLevel(0);
-        setPlayerPos({ x: 9, y: 11 });
-        setStoryStep(6);
+      if (currentLevel === 5 && storyStep === 7) {
+        setGameState('CREDITS');
+      } else {
+        setGameState('EXPLORE');
+        if (currentLevel === 1 && storyStep === 5) {
+          setCurrentLevel(0);
+          setPlayerPos({ x: 9, y: 11 });
+          setStoryStep(6);
+        }
       }
     }
   }, [dialogueIndex, dialogueQueue, currentLevel, storyStep]);
@@ -1348,20 +1595,20 @@ CRITICAL RULES:
       {/* Fullscreen Game World */}
       <div className="absolute inset-0 overflow-hidden bg-[#8bac0f]">
         {isGridLevel ? (
-          <motion.div 
+            <motion.div 
             animate={{ x: cameraX, y: cameraY }}
             transition={{ type: 'spring', stiffness: 300, damping: 30, mass: 0.5 }}
             className="relative"
             style={{ 
-              width: GRID_SIZE * TILE_SIZE * SCALE, 
-              height: GRID_SIZE * TILE_SIZE * SCALE,
+              width: mapData[0].length * TILE_SIZE * SCALE, 
+              height: mapData.length * TILE_SIZE * SCALE,
               backgroundImage: currentLevel >= 2 ? `url(${SPRITES.chaocidadepedra})` : 'none',
               backgroundSize: `${TILE_SIZE * SCALE}px ${TILE_SIZE * SCALE}px`,
               imageRendering: 'pixelated'
             }}
           >
             {/* Map Rendering */}
-            <div className="absolute inset-0 grid" style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, 1fr)`, gridTemplateRows: `repeat(${GRID_SIZE}, 1fr)` }}>
+            <div className="absolute inset-0 grid" style={{ gridTemplateColumns: `repeat(${mapData[0].length}, 1fr)`, gridTemplateRows: `repeat(${mapData.length}, 1fr)` }}>
               {mapData.flatMap((row, y) => row.map((tile, x) => (
                 <div key={`game-${currentLevel}-${x}-${y}`} className="relative">
                   <Tile data={tile} x={x} y={y} mapData={mapData} />
@@ -1541,7 +1788,7 @@ CRITICAL RULES:
 
                   {/* Opponent Stats (Top Left) */}
                   <div className="absolute top-[8%] left-[5%] w-[42%] flex flex-col items-center justify-center z-20 bg-[#f8f8f8] border-[6px] border-[#303030] rounded-lg p-2 shadow-md">
-                    <span className="text-[3vw] sm:text-[2vw] md:text-[1.2vw] font-bold text-[#303030] mb-1">{currentOpponent || 'Wild Pokémon'} Lv5</span>
+                    <span className="text-[3vw] sm:text-[2vw] md:text-[1.2vw] font-bold text-[#303030] mb-1">{isFinalBattle ? "Leader's Team" : (currentOpponent || 'Wild Pokémon')} Lv5</span>
                     {/* HP Bar Slot */}
                     <div className="relative w-[80%] h-[10px] bg-[#484848] rounded-[1px] border border-[#303030] overflow-hidden">
                       <div 
@@ -1552,34 +1799,68 @@ CRITICAL RULES:
                   </div>
 
                   {/* Opponent Sprite (Top Right) */}
-                  <div className="absolute top-[5%] right-[5%] w-[45%] h-[45%] flex items-center justify-center z-30">
-                    <motion.img 
-                      variants={opponentVariants}
-                      animate={opponentAnim}
-                      src={currentOpponentSprite} 
-                      alt={currentOpponent} 
-                      className="w-full h-full object-contain" 
-                      style={{ imageRendering: 'pixelated' }} 
-                      referrerPolicy="no-referrer" 
-                    />
+                  <div className="absolute top-[15%] right-[5%] w-[45%] h-[45%] flex items-center justify-center z-30">
+                    {isFinalBattle ? (
+                      <div className="flex items-center justify-center w-full h-full">
+                        {['Pikachu', 'Charmander', 'Bulbasaur'].map((name, idx) => (
+                          <motion.img 
+                            key={name}
+                            variants={opponentVariants}
+                            animate={opponentAnim}
+                            src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${name === 'Pikachu' ? 25 : name === 'Charmander' ? 4 : 1}.png`} 
+                            alt={name} 
+                            className="w-1/3 h-[80%] object-contain" 
+                            style={{ imageRendering: 'pixelated', marginLeft: idx > 0 ? '-10%' : '0' }} 
+                            referrerPolicy="no-referrer" 
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <motion.img 
+                        variants={opponentVariants}
+                        animate={opponentAnim}
+                        src={currentOpponentSprite} 
+                        alt={currentOpponent} 
+                        className="w-full h-full object-contain" 
+                        style={{ imageRendering: 'pixelated' }} 
+                        referrerPolicy="no-referrer" 
+                      />
+                    )}
                   </div>
 
                   {/* Player Sprite (Bottom Left) */}
-                  <div className="absolute bottom-[25%] md:bottom-[10%] left-[5%] w-[60%] h-[60%] flex items-end justify-start z-20">
-                    <motion.img 
-                      variants={playerVariants}
-                      animate={playerAnim}
-                      src={playerPkmnDetails?.backSprite || SPRITES[`${selectedPokemon?.toLowerCase()}_back` as keyof typeof SPRITES] || SPRITES.eevee_back} 
-                      alt="Your Pokemon" 
-                      className="w-full h-full object-contain object-bottom" 
-                      style={{ imageRendering: 'pixelated' }} 
-                      referrerPolicy="no-referrer" 
-                    />
+                  <div className="absolute bottom-[35%] md:bottom-[20%] left-[5%] w-[60%] h-[60%] flex items-end justify-start z-20">
+                    {isFinalBattle ? (
+                      <div className="flex items-end justify-start w-full h-full">
+                        {selectedTeam.map((name, idx) => (
+                          <motion.img 
+                            key={name}
+                            variants={playerVariants}
+                            animate={playerAnim}
+                            src={pokemonCache[name.toLowerCase()]?.backSprite || SPRITES[`${name.toLowerCase()}_back` as keyof typeof SPRITES] || SPRITES.eevee_back} 
+                            alt={name} 
+                            className="w-1/3 h-[80%] object-contain object-bottom" 
+                            style={{ imageRendering: 'pixelated', marginLeft: idx > 0 ? '-10%' : '0' }} 
+                            referrerPolicy="no-referrer" 
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <motion.img 
+                        variants={playerVariants}
+                        animate={playerAnim}
+                        src={playerPkmnDetails?.backSprite || SPRITES[`${selectedPokemon?.toLowerCase()}_back` as keyof typeof SPRITES] || SPRITES.eevee_back} 
+                        alt="Your Pokemon" 
+                        className="w-full h-full object-contain object-bottom" 
+                        style={{ imageRendering: 'pixelated' }} 
+                        referrerPolicy="no-referrer" 
+                      />
+                    )}
                   </div>
 
                   {/* Player Stats (Bottom Right) */}
                   <div className="absolute bottom-[45%] md:bottom-[32%] right-[5%] w-[42%] flex flex-col items-center justify-center z-20 bg-[#f8f8f8] border-[6px] border-[#303030] rounded-lg p-2 shadow-md">
-                    <span className="text-[3vw] sm:text-[2vw] md:text-[1.2vw] font-bold text-[#303030] mb-1">{selectedPokemon || 'Eevee'} Lv5</span>
+                    <span className="text-[3vw] sm:text-[2vw] md:text-[1.2vw] font-bold text-[#303030] mb-1">{isFinalBattle ? 'Team' : (selectedPokemon || 'Eevee')} Lv5</span>
                     {/* HP Bar Slot */}
                     <div className="relative w-[80%] h-[10px] bg-[#484848] rounded-[1px] border border-[#303030] overflow-hidden">
                       <div 
@@ -1763,23 +2044,72 @@ CRITICAL RULES:
           >
             <h2 className="text-4xl font-bold text-[#9bbc0f] mb-4">VICTORY!</h2>
             <p className="text-zinc-400 max-w-md mb-8">
-              You've mastered the basics of <span className="text-white">Will</span> and <span className="text-white">Going To</span>. 
-              Ready to explore a new area?
+              You've mastered the basics of <span className="text-white">Will</span> and <span className="text-white">Going To</span>.
             </p>
             <div className="flex gap-4">
-              <button 
-                onClick={() => setGameState('LEVEL_EDITOR')}
-                className="bg-[#9bbc0f] text-black px-8 py-3 rounded-full font-bold hover:scale-105 transition-transform"
-              >
-                OPEN LEVEL EDITOR
-              </button>
               <button 
                 onClick={() => window.location.reload()}
                 className="bg-zinc-800 text-white px-8 py-3 rounded-full font-bold hover:scale-105 transition-transform"
               >
                 RESTART GAME
               </button>
+              <button 
+                onClick={() => setGameState('CREDITS')}
+                className="bg-[#9bbc0f] text-black px-8 py-3 rounded-full font-bold hover:scale-105 transition-transform"
+              >
+                VER CRÉDITOS
+              </button>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Credits Screen */}
+      <AnimatePresence>
+        {gameState === 'CREDITS' && (
+          <motion.div 
+            key="credits"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center overflow-hidden"
+          >
+            <motion.div
+              initial={{ y: '100vh' }}
+              animate={{ y: '-100vh' }}
+              transition={{ duration: 30, ease: "linear" }}
+              className="text-center space-y-16"
+            >
+              <h2 className="text-4xl font-bold text-[#9bbc0f] mb-12">PARABÉNS!</h2>
+              
+              <div className="space-y-4">
+                <p className="text-2xl text-white font-bold">DESENVOLVEDORES</p>
+                <p className="text-xl text-zinc-400">Lucas</p>
+                <p className="text-xl text-zinc-400">Eduardo</p>
+                <p className="text-xl text-zinc-400">Giovanni</p>
+                <p className="text-xl text-zinc-400">Julia</p>
+                <p className="text-xl text-zinc-400">Mariana</p>
+                <p className="text-xl text-zinc-400">Melissa</p>
+              </div>
+
+              <div className="pt-8">
+                <p className="text-2xl text-[#9bbc0f] font-bold">TURMA</p>
+                <p className="text-xl text-zinc-400">8º B</p>
+              </div>
+            </motion.div>
+
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 25, duration: 2 }}
+              className="absolute bottom-12"
+            >
+              <button 
+                onClick={() => window.location.reload()}
+                className="bg-zinc-800 border-2 border-[#9bbc0f] text-white px-8 py-3 rounded-full font-bold hover:bg-[#9bbc0f] hover:text-black transition-colors"
+              >
+                RESTART GAME
+              </button>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -1793,8 +2123,8 @@ CRITICAL RULES:
               onMouseUp={() => setIsPainting(false)}
               onMouseLeave={() => setIsPainting(false)}
             >
-               <div className="relative transform scale-[0.4] md:scale-[0.6] origin-center" style={{ width: GRID_SIZE * TILE_SIZE, height: GRID_SIZE * TILE_SIZE }}>
-                  <div className="absolute inset-0 grid" style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, 1fr)`, gridTemplateRows: `repeat(${GRID_SIZE}, 1fr)` }}>
+               <div className="relative transform scale-[0.4] md:scale-[0.6] origin-center" style={{ width: mapData[0].length * TILE_SIZE, height: mapData.length * TILE_SIZE }}>
+                  <div className="absolute inset-0 grid" style={{ gridTemplateColumns: `repeat(${mapData[0].length}, 1fr)`, gridTemplateRows: `repeat(${mapData.length}, 1fr)` }}>
                     {mapData.flatMap((row, y) => row.map((tile, x) => (
                       <div 
                         key={`editor-${x}-${y}`} 
@@ -1928,16 +2258,29 @@ CRITICAL RULES:
                      Import
                    </button>
                  </div>
-                 <button 
-                   onClick={() => { 
-                     setPlayerPos({x: 7, y: 14}); 
-                     setCurrentLevel(1); 
-                     setGameState('EXPLORE'); 
-                   }} 
-                   className="bg-[#9bbc0f] text-black p-2 md:p-3 rounded-xl font-bold hover:bg-[#8bac0f] transition-colors mt-1 md:mt-2 text-sm"
-                 >
-                   PLAY LEVEL
-                 </button>
+                 <div className="grid grid-cols-2 gap-2 mt-1 md:mt-2">
+                   <button 
+                     onClick={() => { 
+                       setPlayerPos({x: 7, y: 14}); 
+                       setCurrentLevel(1); 
+                       setGameState('EXPLORE'); 
+                     }} 
+                     className="bg-[#9bbc0f] text-black p-2 md:p-3 rounded-xl font-bold hover:bg-[#8bac0f] transition-colors text-sm"
+                   >
+                     PLAY LEVEL
+                   </button>
+                   <button 
+                     onClick={() => { 
+                       setPlayerPos({x: 7, y: 1}); 
+                       setCurrentLevel(5); 
+                       setMapData(LEVEL_5_MAP_DATA);
+                       setGameState('EXPLORE'); 
+                     }} 
+                     className="bg-blue-600 text-white p-2 md:p-3 rounded-xl font-bold hover:bg-blue-500 transition-colors text-sm"
+                   >
+                     SKIP TO CITY
+                   </button>
+                 </div>
                </div>
             </div>
           </div>
@@ -1945,6 +2288,60 @@ CRITICAL RULES:
 
         {/* Battle Choice UI */}
       <AnimatePresence>
+        {gameState === 'FINAL_BATTLE_CHOICE' && (
+          <motion.div 
+            key="final-battle-choice"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-zinc-950/95 flex flex-col items-center justify-center z-[100] pointer-events-auto p-8"
+          >
+            <div className="max-w-4xl w-full">
+              <PixelText className="text-white block text-center mb-4 text-xl md:text-2xl">CHOOSE YOUR TEAM OF 3!</PixelText>
+              <PixelText className="text-zinc-500 block text-center mb-8 text-sm uppercase tracking-widest">Selected: {selectedTeam.length}/3</PixelText>
+              
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-8 max-h-[60vh] overflow-y-auto p-4 custom-scrollbar">
+                {ownedPokemon.map((name, idx) => {
+                  const isSelected = selectedTeam.includes(name);
+                  return (
+                    <button 
+                      key={`${name}-${idx}`}
+                      onClick={() => toggleTeamMember(name)}
+                      className={`group flex flex-col items-center p-6 bg-zinc-900 rounded-2xl border-4 transition-all shadow-xl ${
+                        isSelected ? 'border-[#9bbc0f] bg-zinc-800' : 'border-zinc-800 hover:border-zinc-600'
+                      }`}
+                    >
+                      <img 
+                        src={pokemonCache[name.toLowerCase()]?.sprite || SPRITES[name.toLowerCase() as keyof typeof SPRITES] || SPRITES.eevee} 
+                        alt={name} 
+                        className={`w-24 h-24 md:w-32 md:h-32 object-contain transition-transform ${isSelected ? 'scale-110' : 'group-hover:scale-105'}`} 
+                        style={{ imageRendering: 'pixelated' }}
+                        referrerPolicy="no-referrer"
+                      />
+                      <PixelText className={`${isSelected ? 'text-[#9bbc0f]' : 'text-zinc-400'} text-sm md:text-base mt-4`}>{name}</PixelText>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-8 flex justify-center">
+                <button
+                  disabled={selectedTeam.length === 0}
+                  onClick={confirmFinalBattle}
+                  className={`px-12 py-4 rounded-xl border-4 transition-all flex items-center gap-4 ${
+                    selectedTeam.length > 0 
+                      ? 'bg-[#9bbc0f] border-[#8bac0f] text-[#0f380f] hover:scale-105 active:scale-95' 
+                      : 'bg-zinc-800 border-zinc-700 text-zinc-500 cursor-not-allowed'
+                  }`}
+                >
+                  <PixelText className="text-lg">START FINAL BATTLE</PixelText>
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {gameState === 'BATTLE_CHOICE' && (
           <motion.div 
             key="battle-choice"
@@ -2087,7 +2484,7 @@ CRITICAL RULES:
 
                   <div>
                     <p className="text-[10px] text-zinc-500 uppercase mb-2 font-bold">Skip Routes</p>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-4 gap-2">
                       {[
                         { name: 'Route 1', level: 2, map: LEVEL_2_MAP_DATA },
                         { name: 'Route 2', level: 3, map: LEVEL_3_MAP_DATA },
@@ -2111,6 +2508,23 @@ CRITICAL RULES:
                           {route.name}
                         </button>
                       ))}
+                      <button
+                        onClick={() => {
+                          setPlayerPos({x: 7, y: 1}); 
+                          setCurrentLevel(5); 
+                          setMapData(LEVEL_5_MAP_DATA);
+                          setGameState('EXPLORE');
+                          setOwnedPokemon(prev => {
+                            const newTeam = ['Eevee', 'Bulbasaur', 'Charmander', 'Squirtle', 'Missingno'];
+                            return Array.from(new Set([...prev, ...newTeam]));
+                          });
+                          setSelectedPokemon(prev => prev || 'Eevee');
+                          setIsSettingsOpen(false);
+                        }}
+                        className="p-2 text-[10px] bg-blue-900/50 border border-blue-700 text-blue-400 rounded-lg hover:border-blue-400 hover:text-blue-300 transition-all font-bold"
+                      >
+                        CITY
+                      </button>
                     </div>
                   </div>
 
