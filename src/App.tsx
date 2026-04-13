@@ -4,7 +4,7 @@ import { ChevronRight, Sparkles, Home, TreeDeciduous, MapPin, Settings, ArrowUp,
 import { GoogleGenAI, Type } from '@google/genai';
 
 // --- Types ---
-type GameState = 'EXPLORE' | 'DIALOGUE' | 'POKEMON_CHOICE' | 'BATTLE_CHOICE' | 'FINAL_BATTLE_CHOICE' | 'FINISHED' | 'BATTLE' | 'LEVEL_EDITOR' | 'CREDITS';
+type GameState = 'EXPLORE' | 'DIALOGUE' | 'POKEMON_CHOICE' | 'BATTLE_CHOICE' | 'FINAL_BATTLE_CHOICE' | 'FINISHED' | 'BATTLE' | 'LEVEL_EDITOR' | 'CREDITS' | 'POKEMART';
 
 interface Dialogue {
   speaker: string;
@@ -90,6 +90,19 @@ const SPRITES = {
   agua4: "./agua4.png",
   missingno: "./missingno.png",
   missingno_back: "./missingno.png",
+  cynthia: "./cynthia/cynparadofrente.png",
+  cynthia_walk_down_1: "./cynthia/cynandandofrente1.png",
+  cynthia_walk_down_2: "./cynthia/cynandandofrente2.png",
+  cynthia_walk_up_1: "./cynthia/cynandandotras1.png",
+  cynthia_walk_up_2: "./cynthia/cynandandotras2.png",
+  cynthia_walk_left_1: "./cynthia/cynandandoladoesquerdo1.png",
+  cynthia_walk_left_2: "./cynthia/cynandandoladoesquerdo2.png",
+  cynthia_walk_right_1: "./cynthia/cynandandoladodireito1.png",
+  cynthia_walk_right_2: "./cynthia/cynandandoladodireito2.png",
+  cynthia_idle_down: "./cynthia/cynparadofrente.png",
+  cynthia_idle_up: "./cynthia/cynparadotras.png",
+  cynthia_idle_left: "./cynthia/cynparadoladoesquerdo.png",
+  cynthia_idle_right: "./cynthia/cynparadoladodireito.png",
 };
 
 const POKEMON_DATA = {
@@ -117,6 +130,17 @@ export const getPokemonData = async (name: string): Promise<PokemonDetails> => {
   const lowerName = name.toLowerCase();
   if (pokemonCache[lowerName]) return pokemonCache[lowerName];
   
+  if (lowerName === 'cynthia') {
+    const details = {
+      hp: POKEMON_DATA.GYM_LEADER.hp,
+      moves: POKEMON_DATA.GYM_LEADER.moves,
+      sprite: SPRITES.cynthia,
+      backSprite: SPRITES.cynthia
+    };
+    pokemonCache[lowerName] = details;
+    return details;
+  }
+
   if (lowerName === 'treinador') {
     const details = {
       hp: POKEMON_DATA.Treinador.hp,
@@ -219,7 +243,7 @@ const INITIAL_MAP_DATA: MapTileData[][] = [
   [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
   [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
   [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-  [1, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 10, 0, 0, 0, 0, 0, 0, 14, 0, 0, 0, 0, 1],
   [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
   [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
   [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
@@ -318,10 +342,10 @@ const LEVEL_5_MAP_DATA: MapTileData[][] = [
   [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
 ].map(row => row.map(type => ({ type, rotation: 0, hasBattle: false })));
 
-// Adicionando o treinador na frente do ginásio (x: 6, y: 21)
-LEVEL_5_MAP_DATA[21][6] = { type: 17, rotation: 0, hasBattle: true, pokemonName: 'Treinador' };
-// Ginásio rotacionado 180 graus (x: 6, y: 22)
-LEVEL_5_MAP_DATA[22][6] = { type: 11, rotation: 180, hasBattle: false };
+// Adicionando o treinador na frente do PokéMart
+LEVEL_5_MAP_DATA[12][12] = { type: 5, rotation: 0, hasBattle: false };
+// Ginásio rotacionado 0 graus (x: 6, y: 20)
+LEVEL_5_MAP_DATA[20][6] = { type: 11, rotation: 0, hasBattle: false };
 
 const Tile = React.memo(({ data, x, y, mapData }: { data: MapTileData, x: number, y: number, mapData?: MapTileData[][] }) => {
   const [frame, setFrame] = useState(0);
@@ -375,7 +399,7 @@ const Tile = React.memo(({ data, x, y, mapData }: { data: MapTileData, x: number
   } else if (data.type === 16) {
     bgImage = '';
   } else if (data.type === 17) {
-    bgImage = data.pokemonName === 'Treinador' ? SPRITES.friend : SPRITES.pokebola;
+    bgImage = data.pokemonName === 'Cynthia' ? SPRITES.cynthia : SPRITES.pokebola;
   } else if (data.type === 18) {
     bgImage = SPRITES.labpereira;
   }
@@ -402,34 +426,24 @@ const Tile = React.memo(({ data, x, y, mapData }: { data: MapTileData, x: number
     if (hasPathTopLeft && !hasPathTop && !hasPathLeft) pathOverlays.push(SPRITES.caminhodiagonalinferiordireito);
   }
 
-  const isTall = [1, 2, 7, 10, 11, 12, 13, 14, 15, 18].includes(data.type);
-  const zIndex = isTall ? y : 0;
+  const isTall = [1, 2, 7, 10, 11, 12, 13, 14, 15, 17, 18].includes(data.type);
+  const zIndex = data.type === 17 ? 100 : (isTall ? y : 0);
+
+  const isCityTile = data.type === 5 || data.type === 17;
+  const bgColor = isCityTile ? 'bg-[#303030]' : (data.type === 16 ? '' : 'bg-[#8bac0f]');
+  const baseImage = isCityTile ? SPRITES.chaocidadepedra : baseGrass;
 
   return (
-    <div className={`w-full h-full relative ${data.type === 16 ? '' : 'bg-[#8bac0f]'}`} style={{ zIndex }}>
-      {/* Base Grass Layer for all tiles except Grass itself (to avoid double rendering) */}
+    <div className={`w-full h-full relative ${bgColor}`} style={{ zIndex }}>
+      {/* Base Layer for all tiles except Grass itself (to avoid double rendering) */}
       {data.type !== 0 && (
         <div 
           className="absolute inset-0" 
           style={{
-            backgroundImage: `url(${baseGrass})`,
+            backgroundImage: `url(${baseImage})`,
             backgroundSize: 'cover',
             imageRendering: 'pixelated',
             backgroundRepeat: 'no-repeat'
-          }}
-        />
-      )}
-
-      {/* Main Tile Image with Rotation */}
-      {bgImage && (
-        <div 
-          className="absolute inset-0" 
-          style={{
-            backgroundImage: `url(${bgImage})`,
-            backgroundSize: 'cover',
-            imageRendering: 'pixelated',
-            backgroundRepeat: 'no-repeat',
-            transform: data.rotation ? `rotate(${data.rotation}deg)` : 'none'
           }}
         />
       )}
@@ -466,6 +480,7 @@ const Tile = React.memo(({ data, x, y, mapData }: { data: MapTileData, x: number
         <div 
           className={`absolute ${
             data.type === 1 ? 'bottom-0 w-full h-[200%]' : 
+            data.type === 11 ? 'bottom-0 left-0 w-[500%] h-[400%]' :
             (data.type >= 10 && data.type <= 14) ? 'bottom-0 left-0 w-[500%] h-[500%]' : 
             data.type === 18 ? 'bottom-0 left-0 w-[600%] h-[400%]' :
             'inset-0'
@@ -580,6 +595,23 @@ export default function App() {
   const [friendFacing, setFriendFacing] = useState<'down' | 'up' | 'left' | 'right'>('down');
   const [isFriendMoving, setIsFriendMoving] = useState(false);
   const [isFriendVisible, setIsFriendVisible] = useState(false);
+  const [cynthiaPos, setCynthiaPos] = useState({ x: 12, y: 12 });
+  const [cynthiaFacing, setCynthiaFacing] = useState<'down' | 'up' | 'left' | 'right'>('down');
+  const [isCynthiaMoving, setIsCynthiaMoving] = useState(false);
+  const [isCynthiaVisible, setIsCynthiaVisible] = useState(false);
+  const [cynthiaFrame, setCynthiaFrame] = useState(0);
+
+  useEffect(() => {
+    if (!isCynthiaMoving) {
+      setCynthiaFrame(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setCynthiaFrame(f => (f === 0 ? 1 : 0));
+    }, 150);
+    return () => clearInterval(interval);
+  }, [isCynthiaMoving]);
+
   const [currentLevel, setCurrentLevel] = useState(0);
   const [battleLog, setBattleLog] = useState<BattleMessage[]>([]);
   const [battleInput, setBattleInput] = useState('');
@@ -588,7 +620,9 @@ export default function App() {
   const [playerHP, setPlayerHP] = useState(20);
   const [maxPlayerHP, setMaxPlayerHP] = useState(20);
   const [opponentHP, setOpponentHP] = useState(20);
+  const [battleResult, setBattleResult] = useState<'win' | 'loss' | null>(null);
   const [inventory, setInventory] = useState({ potion: 1, pokeball: 5 });
+  const [coins, setCoins] = useState(0);
   const [viewport, setViewport] = useState({ w: window.innerWidth, h: window.innerHeight });
   const [playerAnim, setPlayerAnim] = useState<'idle' | 'attack' | 'hit'>('idle');
   const [opponentAnim, setOpponentAnim] = useState<'idle' | 'attack' | 'hit'>('idle');
@@ -606,8 +640,27 @@ export default function App() {
   const [isPainting, setIsPainting] = useState(false);
   const [pokemonList, setPokemonList] = useState<{name: string, url: string}[]>([]);
   const [pokemonSearch, setPokemonSearch] = useState('');
-  const [customApiKey, setCustomApiKey] = useState(() => localStorage.getItem('customApiKey') || '');
+  const [customApiKey, setCustomApiKey] = useState(() => {
+    // Check URL first
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlKey = urlParams.get('key');
+    if (urlKey) {
+      localStorage.setItem('customApiKey', urlKey);
+      return urlKey;
+    }
+    return localStorage.getItem('customApiKey') || '';
+  });
   const [showApiKeyPrompt, setShowApiKeyPrompt] = useState(false);
+
+  // Sync URL key to state if it changes
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlKey = urlParams.get('key');
+    if (urlKey && urlKey !== customApiKey) {
+      setCustomApiKey(urlKey);
+      localStorage.setItem('customApiKey', urlKey);
+    }
+  }, [customApiKey]);
   const chatRef = useRef<any>(null);
 
   const activeApiKeys = customApiKey ? [customApiKey, ...API_KEYS] : API_KEYS;
@@ -758,6 +811,16 @@ export default function App() {
     4: [
       { speaker: "Prof. Pereira", text: "Excellent! I am sure you two will be great partners.", grammarFocus: "Will: A prediction." },
       { speaker: "Leo", text: "Now you are ready! I think you will be a great trainer.", grammarFocus: "Will: A prediction." },
+    ],
+    6: [
+      { speaker: "Cynthia", text: "Welcome to the Big City! I am Cynthia, the Gym Leader." },
+      { speaker: "Cynthia", text: "I see you have a Pokémon. Are you going to challenge me?", grammarFocus: "Going To: Asking about an intention." },
+      { speaker: "You", text: "Yes! I will defeat you!", grammarFocus: "Will: A spontaneous decision/promise." },
+      { speaker: "Cynthia", text: "We will see about that! Come to the Gym when you are ready.", grammarFocus: "Will: A prediction." },
+    ],
+    7: [
+      { speaker: "Cynthia", text: "You did it! You are going to be a Pokémon Master!", grammarFocus: "Going To: A prediction with evidence." },
+      { speaker: "Cynthia", text: "I will always remember this battle.", grammarFocus: "Will: A promise." },
     ]
   };
 
@@ -765,13 +828,14 @@ export default function App() {
     setDialogueQueue(storyDialogues[step]);
     setDialogueIndex(0);
     setGameState('DIALOGUE');
-    setStoryStep(step + 1);
-  }, []);
+    // Set storyStep to current dialogue index
+    setStoryStep(step);
+  }, [storyDialogues]);
 
   // --- Movement Logic ---
   const startBattle = useCallback(async (opponentName: string = 'Charmander') => {
     setPendingOpponent(opponentName);
-    if (opponentName === 'GYM_LEADER') {
+    if (opponentName === 'GYM_LEADER' || opponentName === 'Cynthia') {
       setGameState('FINAL_BATTLE_CHOICE');
     } else {
       setGameState('BATTLE_CHOICE');
@@ -800,13 +864,14 @@ export default function App() {
     setBattleLog([{ role: 'model', text: `A wild ${safeOpponentName} appeared! What will ${playerPkmnName} do?` }]);
     setGameState('BATTLE');
     setBattleInput('');
+    setBattleResult(null);
     setIsOpponentTurn(false);
     setIsStartingBattle(false);
 
     if (activeApiKeys.length > 0) {
       try {
         const ai = new GoogleGenAI({ apiKey: activeApiKeys[apiKeyIndex] });
-        const systemInstruction = opponentName === 'GYM_LEADER' 
+        const systemInstruction = opponentName === 'Cynthia' 
           ? `You are a text-based RPG narrator for the FINAL BOSS BATTLE in a Pokémon Gym. This is an English learning game for 8th-grade students. 
 CRITICAL RULES:
 1. You MUST speak ONLY in English.
@@ -815,7 +880,7 @@ CRITICAL RULES:
 4. If they use "will" or "going to" CORRECTLY, make their attack very successful and praise their grammar!
 5. BATTLE FLOW: Every turn, after the player's action, the opponent MUST counter-attack.
 6. The player has a TEAM of 3 Pokémon: ${selectedTeam.join(', ')}. They can switch between them or use them together in narration.
-7. The opponent is the GYM LEADER with a TEAM of 3: Pikachu, Charmander, and Bulbasaur.
+7. The opponent is GYM LEADER CYNTHIA with a TEAM of 3: Garchomp, Lucario, and Togekiss.
 8. The battle is 3v3. Narrate the epic scale of this final confrontation.
 9. You must return your response in JSON format matching the schema. Update the HP and inventory based on the turn's events. The opponent's total team HP is ${oDetails.hp}. The player's total team HP is ${pDetails.hp}.`
           : `You are a text-based RPG narrator for a Pokémon battle. This is an English learning game for 8th-grade students. 
@@ -875,7 +940,7 @@ CRITICAL RULES:
       moves: combinedMoves
     };
     
-    const oDetails = await getPokemonData('GYM_LEADER');
+    const oDetails = await getPokemonData('Cynthia');
     
     setPlayerPkmnDetails(pDetails);
     setOpponentPkmnDetails(oDetails);
@@ -883,15 +948,16 @@ CRITICAL RULES:
     setPlayerHP(pDetails.hp);
     setMaxPlayerHP(pDetails.hp);
     
-    const safeOpponentName = 'GYM_LEADER';
+    const safeOpponentName = 'Cynthia';
     setOpponentHP(oDetails.hp);
     setCurrentOpponent(safeOpponentName);
     setCurrentOpponentSprite(oDetails.sprite);
     setCurrentOpponentAbilities(oDetails.moves.join(', '));
     
-    setBattleLog([{ role: 'model', text: `GYM LEADER wants to battle! What will your team do?` }]);
+    setBattleLog([{ role: 'model', text: `Gym Leader Cynthia wants to battle! What will your team do?` }]);
     setGameState('BATTLE');
     setBattleInput('');
+    setBattleResult(null);
     setIsOpponentTurn(false);
     setIsStartingBattle(false);
 
@@ -906,7 +972,7 @@ CRITICAL RULES:
 4. If they use "will" or "going to" CORRECTLY, make their attack very successful and praise their grammar!
 5. BATTLE FLOW: Every turn, after the player's action, the opponent MUST counter-attack.
 6. The player has a TEAM of 3 Pokémon: ${selectedTeam.join(', ')}. They can switch between them or use them together in narration. Their combined moves are: ${combinedMoves.join(', ')}.
-7. The opponent is the GYM LEADER with a TEAM of 3: Pikachu, Charmander, and Bulbasaur.
+7. The opponent is GYM LEADER CYNTHIA with a TEAM of 3: Garchomp, Lucario, and Togekiss.
 8. The battle is 3v3. Narrate the epic scale of this final confrontation.
 9. You must return your response in JSON format matching the schema. Update the HP and inventory based on the turn's events. The opponent's total team HP is ${oDetails.hp}. The player's total team HP is ${pDetails.hp}.`;
 
@@ -947,6 +1013,91 @@ CRITICAL RULES:
     });
   };
 
+  // Failsafe to ensure Cynthia is visible in Level 5
+  useEffect(() => {
+    if (currentLevel === 5 && storyStep >= 6 && !isCynthiaVisible && !isCynthiaMoving) {
+      setIsCynthiaVisible(true);
+      if (storyStep >= 7) {
+        setCynthiaPos({ x: 7, y: 21 });
+      } else {
+        setCynthiaPos({ x: 12, y: 12 });
+      }
+      setCynthiaFacing('down');
+    }
+  }, [currentLevel, storyStep, isCynthiaVisible]);
+
+  // Cynthia scripted movement to Gym
+  useEffect(() => {
+    if (currentLevel === 5 && storyStep === 6.5 && isCynthiaVisible && !isCynthiaMoving) {
+      const path = [
+        { x: 13, y: 12, dir: 'right' as const },
+        { x: 13, y: 13, dir: 'down' as const },
+        { x: 13, y: 14, dir: 'down' as const },
+        { x: 13, y: 15, dir: 'down' as const },
+        { x: 13, y: 16, dir: 'down' as const },
+        { x: 13, y: 17, dir: 'down' as const },
+        { x: 13, y: 18, dir: 'down' as const },
+        { x: 13, y: 19, dir: 'down' as const },
+        { x: 13, y: 20, dir: 'down' as const },
+        { x: 13, y: 21, dir: 'down' as const },
+        { x: 12, y: 21, dir: 'left' as const },
+        { x: 11, y: 21, dir: 'left' as const },
+        { x: 10, y: 21, dir: 'left' as const },
+        { x: 9, y: 21, dir: 'left' as const },
+        { x: 8, y: 21, dir: 'left' as const },
+        { x: 7, y: 21, dir: 'left' as const },
+      ];
+      
+      let step = 0;
+      setIsCynthiaMoving(true);
+      setIsMoving(true);
+      
+      const moveInterval = setInterval(() => {
+        if (step < path.length) {
+          setCynthiaFacing(path[step].dir);
+          setCynthiaPos({ x: path[step].x, y: path[step].y });
+          
+          // Player follows Cynthia
+          if (step > 0) {
+            setPlayerPos({ x: path[step - 1].x, y: path[step - 1].y });
+            setFacing(path[step - 1].dir);
+            setIsMoving(true);
+            
+            // Leo follows Player
+            if (step > 1) {
+              setFriendPos({ x: path[step - 2].x, y: path[step - 2].y });
+              setFriendFacing(path[step - 2].dir);
+              setIsFriendMoving(true);
+            } else {
+              setFriendPos({ x: 12, y: 12 });
+              setFriendFacing('down');
+              setIsFriendMoving(true);
+            }
+          } else {
+            setPlayerPos({ x: 12, y: 12 });
+            setFacing('down');
+            setIsMoving(true);
+          }
+          
+          step++;
+        } else {
+          clearInterval(moveInterval);
+          setIsCynthiaMoving(false);
+          setIsMoving(false);
+          setIsFriendMoving(false);
+          setCynthiaFacing('down');
+          setFacing('up');
+          setFriendFacing('up');
+          setPlayerPos({ x: 7, y: 22 }); // Player stops in front of her
+          setFriendPos({ x: 7, y: 23 }); // Leo stops behind player
+          setStoryStep(7);
+        }
+      }, 400);
+      
+      return () => clearInterval(moveInterval);
+    }
+  }, [currentLevel, storyStep, isCynthiaVisible]);
+
   const handleInteract = useCallback(() => {
     if (currentLevel === 1) {
       // Check distance to Prof. Pereira (approx 180, 100)
@@ -977,6 +1128,14 @@ CRITICAL RULES:
 
     if (targetX < 0 || targetX >= mapData[0].length || targetY < 0 || targetY >= mapData.length) return;
 
+    // Check for PokéMart interaction
+    const isPokeMartLevel0 = currentLevel === 0 && ((targetX === 11 && targetY === 5) || (playerPos.x === 11 && playerPos.y === 5 && facing === 'up'));
+    const isPokeMartLevel5 = currentLevel === 5 && ((targetX === 12 && targetY === 11) || (playerPos.x === 12 && playerPos.y === 11 && facing === 'up'));
+    if (isPokeMartLevel0 || isPokeMartLevel5) {
+      setGameState('POKEMART');
+      return;
+    }
+
     const targetTile = mapData[targetY][targetX];
 
     if (targetTile.type === 3 || targetTile.type === 15) { // Tall Grass or Arbusto (can be cut)
@@ -1006,8 +1165,14 @@ CRITICAL RULES:
         setDialogueIndex(0);
         setGameState('DIALOGUE');
       }
+    } else if (isCynthiaVisible && targetX === cynthiaPos.x && targetY === cynthiaPos.y) {
+      if (storyStep === 6) {
+        startDialogue(6);
+      } else if (storyStep >= 7) {
+        startBattle('Cynthia');
+      }
     }
-  }, [playerPos, facing, mapData, startBattle, currentLevel, playerPixelPos, storyStep, friendPos, isFriendVisible, startDialogue]);
+  }, [playerPos, facing, mapData, startBattle, currentLevel, playerPixelPos, storyStep, friendPos, isFriendVisible, startDialogue, isCynthiaVisible, cynthiaPos]);
 
   const movePlayer = useCallback((dx: number, dy: number, dir: 'down' | 'up' | 'left' | 'right') => {
     if (gameState !== 'EXPLORE' || isMoving) return;
@@ -1093,6 +1258,15 @@ CRITICAL RULES:
         setPlayerPos({ x: 7, y: 0 });
         setFriendPos({ x: 7, y: -1 });
         setIsMoving(false);
+        if (storyStep >= 6) {
+          setIsCynthiaVisible(true);
+          if (storyStep >= 7) {
+            setCynthiaPos({ x: 7, y: 21 });
+          } else {
+            setCynthiaPos({ x: 12, y: 12 });
+          }
+          setCynthiaFacing('down');
+        }
       }, 250);
       return;
     }
@@ -1127,12 +1301,17 @@ CRITICAL RULES:
       isBlocked = true;
     }
 
+    // Cynthia Collision
+    if (isCynthiaVisible && newX === cynthiaPos.x && newY === cynthiaPos.y) {
+      isBlocked = true;
+    }
+
     if (!isBlocked) {
       // Trigger Final Battle when entering Gym area (5x5 around anchor)
       let isEnteringGym = false;
       if (currentLevel === 5) {
-        // Gym is anchored at [22][6], covers y: 18-22, x: 6-10
-        if (newY >= 18 && newY <= 22 && newX >= 6 && newX <= 10) {
+        // Gym is anchored at [20][6], covers y: 17-20, x: 6-10
+        if (newY >= 17 && newY <= 20 && newX >= 6 && newX <= 10) {
           isEnteringGym = true;
         }
       } else if (targetType === 11) {
@@ -1140,7 +1319,7 @@ CRITICAL RULES:
       }
 
       if (isEnteringGym) {
-        setTimeout(() => startBattle('GYM_LEADER'), 300);
+        setTimeout(() => startBattle('Cynthia'), 300);
       }
 
       // Check if inside any building's area (buildings are anchored at bottom-left)
@@ -1217,6 +1396,10 @@ CRITICAL RULES:
         if (storyStep === 1 && newY >= 9) {
           setIsFriendVisible(true);
           startDialogue(1);
+        }
+      } else if (currentLevel === 5) {
+        if (storyStep === 6 && newY >= 10) {
+          startDialogue(6);
         }
       }
     } else {
@@ -1393,19 +1576,31 @@ CRITICAL RULES:
               setIsOpponentTurn(false);
               
               if (data.battleEnded) {
+                if (data.playerHP <= 0) {
+                  setBattleResult('loss');
+                  return; // Stop here, don't transition automatically
+                } else {
+                  setBattleResult('win');
+                }
+
                 if (data.isCaught || data.isDefeated) {
+                  const earnedCoins = Math.floor(Math.random() * 10) + 10;
+                  setCoins(prev => prev + earnedCoins);
                   if (Math.random() < 0.15) {
                     setInventory(prev => ({ ...prev, pokeball: prev.pokeball + 1 }));
-                    setBattleLog(prev => [...prev, { role: 'model', text: "Lucky! You found a Pokéball after the battle!" }]);
+                    setBattleLog(prev => [...prev, { role: 'model', text: `Lucky! You found a Pokéball and earned ${earnedCoins} coins!` }]);
+                  } else {
+                    setBattleLog(prev => [...prev, { role: 'model', text: `You earned ${earnedCoins} coins!` }]);
                   }
                 }
                 setTimeout(() => {
                   if (currentLevel === 5 && currentOpponent === 'GYM_LEADER') {
                     setGameState('FINISHED');
-                  } else if (currentLevel === 5 && currentOpponent === 'Treinador') {
-                    setStoryStep(7);
+                  } else if (currentLevel === 5 && currentOpponent === 'Cynthia') {
+                    setStoryStep(8);
                     setDialogueQueue([
-                      { speaker: "Organizador", text: "Parabéns Red! Você venceu o melhor treinador pokémon!" }
+                      { speaker: "Cynthia", text: "You did it! You are going to be a Pokémon Master!", grammarFocus: "Going To: A prediction with evidence." },
+                      { speaker: "Cynthia", text: "I will always remember this battle.", grammarFocus: "Will: A promise." }
                     ]);
                     setDialogueIndex(0);
                     setGameState('DIALOGUE');
@@ -1453,14 +1648,19 @@ CRITICAL RULES:
     if (dialogueIndex < dialogueQueue.length - 1) {
       setDialogueIndex(prev => prev + 1);
     } else {
-      if (currentLevel === 5 && storyStep === 7) {
-        setGameState('CREDITS');
+      if (currentLevel === 5 && storyStep === 8) {
+        setGameState('FINISHED');
       } else {
         setGameState('EXPLORE');
         if (currentLevel === 1 && storyStep === 5) {
           setCurrentLevel(0);
           setPlayerPos({ x: 9, y: 11 });
           setStoryStep(6);
+        } else if (currentLevel === 5 && storyStep === 6) {
+          setStoryStep(6.5);
+        } else if (storyStep < 6) {
+          // Default progression for early steps
+          setStoryStep(prev => prev + 1);
         }
       }
     }
@@ -1497,6 +1697,18 @@ CRITICAL RULES:
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [movePlayer, movePlayerPixel, currentLevel, gameState, handleNextDialogue, handleInteract]);
+
+  // Movement Watchdog to prevent getting stuck
+  useEffect(() => {
+    if ((isMoving || isCynthiaMoving || isFriendMoving) && storyStep !== 6.5) {
+      const timer = setTimeout(() => {
+        setIsMoving(false);
+        setIsCynthiaMoving(false);
+        setIsFriendMoving(false);
+      }, 3000); // 3 seconds max for any movement
+      return () => clearTimeout(timer);
+    }
+  }, [isMoving, isCynthiaMoving, isFriendMoving, storyStep]);
 
   const selectPokemon = (name: string) => {
     setSelectedPokemon(name);
@@ -1623,7 +1835,7 @@ CRITICAL RULES:
 
             {/* Entities */}
             {/* Friend Leo */}
-            {((isFriendVisible && storyStep < 6) || (storyStep >= 6 && currentLevel === 0) || currentLevel >= 2) && (
+            {((isFriendVisible && storyStep < 6) || (storyStep >= 6 && currentLevel === 0) || currentLevel >= 2 || currentLevel === 5) && (
               <motion.div 
                 animate={{ x: (friendPos.x * TILE_SIZE + TILE_SIZE / 2) * SCALE, y: (friendPos.y + 1) * TILE_SIZE * SCALE }}
                 transition={{ type: 'spring', stiffness: 300, damping: 30 }}
@@ -1631,6 +1843,32 @@ CRITICAL RULES:
                 style={{ left: 0, top: 0, zIndex: friendPos.y }}
               >
                 <PlayerSprite sprite={SPRITES.friend} facing={friendFacing} isMoving={isFriendMoving} scale={SCALE} />
+              </motion.div>
+            )}
+
+            {/* Cynthia */}
+            {currentLevel === 5 && isCynthiaVisible && (
+              <motion.div 
+                animate={{ x: (cynthiaPos.x * TILE_SIZE + TILE_SIZE / 2) * SCALE, y: (cynthiaPos.y + 1) * TILE_SIZE * SCALE }}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                className="absolute"
+                style={{ left: 0, top: 0, zIndex: cynthiaPos.y }}
+              >
+                <div 
+                  className="absolute bottom-0 left-1/2 -translate-x-1/2"
+                  style={{
+                    width: `${48 * SCALE}px`,
+                    height: `${72 * SCALE}px`,
+                    backgroundImage: `url(${
+                      !isCynthiaMoving ? (SPRITES[`cynthia_idle_${cynthiaFacing}` as keyof typeof SPRITES] || SPRITES.cynthia) :
+                      (SPRITES[`cynthia_walk_${cynthiaFacing}_${cynthiaFrame === 0 ? '1' : '2'}` as keyof typeof SPRITES] || SPRITES.cynthia)
+                    })`,
+                    backgroundSize: 'contain',
+                    backgroundPosition: 'bottom center',
+                    backgroundRepeat: 'no-repeat',
+                    imageRendering: 'pixelated',
+                  }}
+                />
               </motion.div>
             )}
 
@@ -1732,8 +1970,8 @@ CRITICAL RULES:
           <div className="bg-zinc-900/90 p-3 md:p-4 rounded-xl border border-zinc-700 backdrop-blur-sm pointer-events-auto flex-1 md:flex-none max-w-[60%]">
             <PixelText className="text-[#9bbc0f] block mb-1 text-[10px] md:text-xs">Adventure Log</PixelText>
             <div className="text-[8px] md:text-[10px] text-zinc-400 space-y-1">
-              <p className="truncate">Location: Route 1 - Home</p>
-              <p className="truncate">Objective: {storyStep === 0 ? "Leave Home" : storyStep === 1 ? "Talk to Leo" : storyStep === 2 ? "Follow Leo to the Lab" : storyStep === 3 ? "Talk to Prof. Pereira" : storyStep === 4 ? "Choose a Pokémon" : storyStep === 5 ? "Leave the Lab" : currentLevel === 2 ? "Explore the Tall Grass" : "Head to Big City"}</p>
+              <p className="truncate">Location: {currentLevel === 5 ? "Big City" : currentLevel === 1 ? "Prof. Pereira's Lab" : "Route 1 - Home"}</p>
+              <p className="truncate">Objective: {storyStep === 0 ? "Leave Home" : storyStep === 1 ? "Talk to Leo" : storyStep === 2 ? "Follow Leo to the Lab" : storyStep === 3 ? "Talk to Prof. Pereira" : storyStep === 4 ? "Choose a Pokémon" : storyStep === 5 ? "Leave the Lab" : currentLevel === 2 ? "Explore the Tall Grass" : storyStep === 6 ? (currentLevel === 5 ? "Talk to Cynthia" : "Head to Big City") : storyStep === 6.5 ? "Follow Cynthia" : "Defeat Cynthia"}</p>
               {selectedPokemon && <p className="text-[#9bbc0f] truncate">Partner: {selectedPokemon}</p>}
             </div>
           </div>
@@ -1750,6 +1988,12 @@ CRITICAL RULES:
               </div>
             </div>
 
+            {/* Coins Display */}
+            <div className="bg-zinc-900/90 px-4 py-3 rounded-xl border border-zinc-700 backdrop-blur-sm pointer-events-auto flex items-center gap-2">
+              <span className="text-yellow-500 font-bold">🪙</span>
+              <span className="text-white font-bold">{coins}</span>
+            </div>
+
             {/* Global Settings Button */}
             <button 
               onClick={() => setIsSettingsOpen(true)}
@@ -1757,6 +2001,21 @@ CRITICAL RULES:
             >
               <Settings size={20} />
             </button>
+            
+            {/* Return to Route 0 Button */}
+            {currentLevel > 0 && (
+              <button 
+                onClick={() => {
+                  setCurrentLevel(0);
+                  setPlayerPos({ x: 11, y: 12 });
+                  setPlayerPixelPos({ x: 206, y: 360 });
+                  setGameState('EXPLORE');
+                }}
+                className="bg-zinc-900/90 px-4 py-3 rounded-xl border border-zinc-700 backdrop-blur-sm pointer-events-auto text-white font-bold hover:bg-zinc-800 flex items-center gap-2"
+              >
+                <Home size={16} /> Route 0
+              </button>
+            )}
           </div>
         </div>
 
@@ -1889,24 +2148,41 @@ CRITICAL RULES:
                           </div>
                         )}
                       </div>
-                      <form onSubmit={handleBattleSubmit} className="flex gap-4 shrink-0 items-center pb-2">
-                        <input 
-                          type="text" 
-                          value={battleInput}
-                          onChange={e => setBattleInput(e.target.value)}
-                          placeholder="WHAT WILL YOU DO?"
-                          className="flex-1 bg-transparent border-none text-[#303030] font-bold uppercase text-[3.5vw] sm:text-[2vw] md:text-[1vw] focus:outline-none placeholder:text-gray-400 py-0"
-                          disabled={isBattleLoading}
-                          autoFocus
-                        />
-                        <button 
-                          type="submit"
-                          disabled={isBattleLoading || !battleInput.trim()}
-                          className="text-[#303030] font-bold text-[3.5vw] sm:text-[2vw] md:text-[1vw] hover:scale-110 transition-transform uppercase"
-                        >
-                          [ACTION]
-                        </button>
-                      </form>
+                      {battleResult ? (
+                        <div className="flex justify-center pb-2">
+                          {battleResult === 'loss' ? (
+                            <button 
+                              onClick={() => startBattle(currentOpponent)}
+                              className="bg-[#303030] text-white px-6 py-2 rounded-full font-bold uppercase hover:scale-105 transition-transform"
+                            >
+                              Restart Battle
+                            </button>
+                          ) : (
+                            <div className="text-[#303030] font-bold text-[3.5vw] sm:text-[2vw] md:text-[1vw] uppercase">
+                              YOU WON!
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <form onSubmit={handleBattleSubmit} className="flex gap-4 shrink-0 items-center pb-2">
+                          <input 
+                            type="text" 
+                            value={battleInput}
+                            onChange={e => setBattleInput(e.target.value)}
+                            placeholder="WHAT WILL YOU DO?"
+                            className="flex-1 bg-transparent border-none text-[#303030] font-bold uppercase text-[3.5vw] sm:text-[2vw] md:text-[1vw] focus:outline-none placeholder:text-gray-400 py-0"
+                            disabled={isBattleLoading}
+                            autoFocus
+                          />
+                          <button 
+                            type="submit"
+                            disabled={isBattleLoading || !battleInput.trim()}
+                            className="text-[#303030] font-bold text-[3.5vw] sm:text-[2vw] md:text-[1vw] hover:scale-110 transition-transform uppercase"
+                          >
+                            [ACTION]
+                          </button>
+                        </form>
+                      )}
                     </div>
                     
                     {/* Moves/Items Info */}
@@ -2114,6 +2390,77 @@ CRITICAL RULES:
         )}
       </AnimatePresence>
 
+      {gameState === 'POKEMART' && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full border-4 border-zinc-800">
+            <h2 className="text-2xl font-bold mb-4 font-pokemon text-center">PokéMart</h2>
+            <div className="flex justify-between items-center mb-6 bg-yellow-100 p-3 rounded-lg border-2 border-yellow-400">
+              <span className="font-bold text-yellow-800">Your Coins:</span>
+              <span className="font-bold text-xl text-yellow-600">{coins}</span>
+            </div>
+            
+            <div className="space-y-4 mb-6">
+              <div className="flex justify-between items-center p-3 bg-zinc-100 rounded-lg border-2 border-zinc-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-red-500 rounded-full border-2 border-black relative overflow-hidden">
+                    <div className="absolute bottom-0 w-full h-1/2 bg-white" />
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full border-2 border-black" />
+                    <div className="absolute top-1/2 left-0 w-full h-[2px] bg-black -translate-y-1/2" />
+                  </div>
+                  <div>
+                    <p className="font-bold">Pokéball</p>
+                    <p className="text-sm text-zinc-500">Catches Pokémon</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => {
+                    if (coins >= 20) {
+                      setCoins(prev => prev - 20);
+                      setInventory(prev => ({ ...prev, pokeball: prev.pokeball + 1 }));
+                    }
+                  }}
+                  disabled={coins < 20}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-lg font-bold disabled:opacity-50 hover:bg-blue-600 active:bg-blue-700"
+                >
+                  20 Coins
+                </button>
+              </div>
+
+              <div className="flex justify-between items-center p-3 bg-zinc-100 rounded-lg border-2 border-zinc-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-purple-500 rounded-t-xl rounded-b-md border-2 border-black relative overflow-hidden">
+                    <div className="absolute top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white/30 rounded-full" />
+                  </div>
+                  <div>
+                    <p className="font-bold">Potion</p>
+                    <p className="text-sm text-zinc-500">Heals 10 HP</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => {
+                    if (coins >= 15) {
+                      setCoins(prev => prev - 15);
+                      setInventory(prev => ({ ...prev, potion: prev.potion + 1 }));
+                    }
+                  }}
+                  disabled={coins < 15}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-lg font-bold disabled:opacity-50 hover:bg-blue-600 active:bg-blue-700"
+                >
+                  15 Coins
+                </button>
+              </div>
+            </div>
+
+            <button 
+              onClick={() => setGameState('EXPLORE')}
+              className="w-full bg-zinc-200 text-zinc-800 py-3 rounded-lg font-bold hover:bg-zinc-300 active:bg-zinc-400"
+            >
+              Leave
+            </button>
+          </div>
+        </div>
+      )}
+
       {gameState === 'LEVEL_EDITOR' && (
           <div className="fixed inset-0 bg-zinc-950 z-[100] flex flex-col md:flex-row text-white font-mono">
             {/* Left/Top: Canvas */}
@@ -2274,7 +2621,13 @@ CRITICAL RULES:
                        setPlayerPos({x: 7, y: 1}); 
                        setCurrentLevel(5); 
                        setMapData(LEVEL_5_MAP_DATA);
-                       setGameState('EXPLORE'); 
+                       setGameState('EXPLORE');
+                       setStoryStep(6);
+                       setIsCynthiaVisible(true);
+                       setCynthiaPos({ x: 12, y: 12 });
+                       setCynthiaFacing('down');
+                       setOwnedPokemon(['Eevee', 'Bulbasaur', 'Charmander', 'Squirtle', 'Missingno']);
+                       setSelectedPokemon('Eevee');
                      }} 
                      className="bg-blue-600 text-white p-2 md:p-3 rounded-xl font-bold hover:bg-blue-500 transition-colors text-sm"
                    >
@@ -2514,6 +2867,10 @@ CRITICAL RULES:
                           setCurrentLevel(5); 
                           setMapData(LEVEL_5_MAP_DATA);
                           setGameState('EXPLORE');
+                          setStoryStep(6);
+                          setIsCynthiaVisible(true);
+                          setCynthiaPos({ x: 12, y: 12 });
+                          setCynthiaFacing('down');
                           setOwnedPokemon(prev => {
                             const newTeam = ['Eevee', 'Bulbasaur', 'Charmander', 'Squirtle', 'Missingno'];
                             return Array.from(new Set([...prev, ...newTeam]));
@@ -2536,6 +2893,19 @@ CRITICAL RULES:
                     className="w-full py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-500 transition-colors"
                   >
                     OPEN LEVEL EDITOR
+                  </button>
+
+                  <button 
+                    onClick={() => {
+                      setIsMoving(false);
+                      setIsCynthiaMoving(false);
+                      setIsFriendMoving(false);
+                      setGameState('EXPLORE');
+                      setIsSettingsOpen(false);
+                    }}
+                    className="w-full py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-500 transition-colors"
+                  >
+                    FIX STUCK CHARACTER
                   </button>
 
                   <button 
