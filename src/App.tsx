@@ -114,7 +114,7 @@ const POKEMON_DATA = {
   Squirtle: { hp: 22, moves: ['Tackle', 'Water Gun'] },
   Missingno: { hp: 999, moves: ['Water Gun', 'Sky Attack', 'Pay Day', 'Fly'] },
   Treinador: { hp: 50, moves: ['Hyper Beam', 'Psychic'] },
-  GYM_LEADER: { hp: 100, moves: ['Thunderbolt', 'Flamethrower', 'Razor Leaf'], sprite: "./friend.png" }
+  GYM_LEADER: { hp: 100, moves: ['Aura Sphere', 'Shadow Ball', 'Leaf Storm'], sprite: "./friend.png" }
 };
 
 interface PokemonDetails {
@@ -661,6 +661,32 @@ export default function App() {
       localStorage.setItem('customApiKey', urlKey);
     }
   }, [customApiKey]);
+
+  const CynthiaSprite = ({ facing, isMoving, frame, scale }: { facing: string, isMoving: boolean, frame: number, scale: number }) => {
+    const idleKey = `cynthia_idle_${facing}` as keyof typeof SPRITES;
+    const walkKey = `cynthia_walk_${facing}_${frame === 0 ? '1' : '2'}` as keyof typeof SPRITES;
+    
+    // Fallback chain: Walk -> Idle -> Default Cynthia
+    const spriteUrl = isMoving 
+      ? (SPRITES[walkKey] || SPRITES[idleKey] || SPRITES.cynthia)
+      : (SPRITES[idleKey] || SPRITES.cynthia);
+
+    return (
+      <div 
+        className="absolute bottom-0 left-1/2 -translate-x-1/2"
+        style={{
+          width: `${48 * scale}px`,
+          height: `${72 * scale}px`,
+          backgroundImage: `url(${spriteUrl})`,
+          backgroundSize: 'contain',
+          backgroundPosition: 'bottom center',
+          backgroundRepeat: 'no-repeat',
+          imageRendering: 'pixelated',
+        }}
+      />
+    );
+  };
+
   const chatRef = useRef<any>(null);
 
   const activeApiKeys = customApiKey ? [customApiKey, ...API_KEYS] : API_KEYS;
@@ -880,7 +906,7 @@ CRITICAL RULES:
 4. If they use "will" or "going to" CORRECTLY, make their attack very successful and praise their grammar!
 5. BATTLE FLOW: Every turn, after the player's action, the opponent MUST counter-attack.
 6. The player has a TEAM of 3 Pokémon: ${selectedTeam.join(', ')}. They can switch between them or use them together in narration.
-7. The opponent is GYM LEADER CYNTHIA with a TEAM of 3: Garchomp, Lucario, and Togekiss.
+7. The opponent is GYM LEADER CYNTHIA with a TEAM of 3: Roserade, Spiritomb, and Lucario.
 8. The battle is 3v3. Narrate the epic scale of this final confrontation.
 9. You must return your response in JSON format matching the schema. Update the HP and inventory based on the turn's events. The opponent's total team HP is ${oDetails.hp}. The player's total team HP is ${pDetails.hp}.`
           : `You are a text-based RPG narrator for a Pokémon battle. This is an English learning game for 8th-grade students. 
@@ -972,7 +998,7 @@ CRITICAL RULES:
 4. If they use "will" or "going to" CORRECTLY, make their attack very successful and praise their grammar!
 5. BATTLE FLOW: Every turn, after the player's action, the opponent MUST counter-attack.
 6. The player has a TEAM of 3 Pokémon: ${selectedTeam.join(', ')}. They can switch between them or use them together in narration. Their combined moves are: ${combinedMoves.join(', ')}.
-7. The opponent is GYM LEADER CYNTHIA with a TEAM of 3: Garchomp, Lucario, and Togekiss.
+7. The opponent is GYM LEADER CYNTHIA with a TEAM of 3: Roserade, Spiritomb, and Lucario.
 8. The battle is 3v3. Narrate the epic scale of this final confrontation.
 9. You must return your response in JSON format matching the schema. Update the HP and inventory based on the turn's events. The opponent's total team HP is ${oDetails.hp}. The player's total team HP is ${pDetails.hp}.`;
 
@@ -1480,7 +1506,7 @@ CRITICAL RULES:
 4. If they use "will" or "going to" CORRECTLY, make their attack very successful and praise their grammar!
 5. BATTLE FLOW: Every turn, after the player's action, the opponent MUST counter-attack.
 6. The player has a TEAM of 3 Pokémon: ${selectedTeam.join(', ')}. They can switch between them or use them together in narration. Their combined moves are: ${pDetails.moves.join(', ')}. If the player tries to use a move they don't know, the attack fails.
-7. The opponent is the GYM LEADER with a TEAM of 3: Pikachu, Charmander, and Bulbasaur.
+7. The opponent is the GYM LEADER with a TEAM of 3: Roserade, Spiritomb, and Lucario.
 8. The battle is 3v3. Narrate the epic scale of this final confrontation.
 9. You must return your response in JSON format matching the schema. Update the HP and inventory based on the turn's events. The opponent's total team HP is ${oDetails.hp}. The player's total team HP is ${pDetails.hp}.
 10. SPECIAL ACTIONS:
@@ -1854,20 +1880,11 @@ CRITICAL RULES:
                 className="absolute"
                 style={{ left: 0, top: 0, zIndex: cynthiaPos.y }}
               >
-                <div 
-                  className="absolute bottom-0 left-1/2 -translate-x-1/2"
-                  style={{
-                    width: `${48 * SCALE}px`,
-                    height: `${72 * SCALE}px`,
-                    backgroundImage: `url(${
-                      !isCynthiaMoving ? (SPRITES[`cynthia_idle_${cynthiaFacing}` as keyof typeof SPRITES] || SPRITES.cynthia) :
-                      (SPRITES[`cynthia_walk_${cynthiaFacing}_${cynthiaFrame === 0 ? '1' : '2'}` as keyof typeof SPRITES] || SPRITES.cynthia)
-                    })`,
-                    backgroundSize: 'contain',
-                    backgroundPosition: 'bottom center',
-                    backgroundRepeat: 'no-repeat',
-                    imageRendering: 'pixelated',
-                  }}
+                <CynthiaSprite 
+                  facing={cynthiaFacing} 
+                  isMoving={isCynthiaMoving} 
+                  frame={cynthiaFrame} 
+                  scale={SCALE} 
                 />
               </motion.div>
             )}
@@ -2061,13 +2078,17 @@ CRITICAL RULES:
                   <div className="absolute top-[15%] right-[5%] w-[45%] h-[45%] flex items-center justify-center z-30">
                     {isFinalBattle ? (
                       <div className="flex items-center justify-center w-full h-full">
-                        {['Pikachu', 'Charmander', 'Bulbasaur'].map((name, idx) => (
+                        {[
+                          { name: 'Roserade', id: 407 },
+                          { name: 'Spiritomb', id: 442 },
+                          { name: 'Lucario', id: 448 }
+                        ].map((pkmn, idx) => (
                           <motion.img 
-                            key={name}
+                            key={pkmn.name}
                             variants={opponentVariants}
                             animate={opponentAnim}
-                            src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${name === 'Pikachu' ? 25 : name === 'Charmander' ? 4 : 1}.png`} 
-                            alt={name} 
+                            src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pkmn.id}.png`} 
+                            alt={pkmn.name} 
                             className="w-1/3 h-[80%] object-contain" 
                             style={{ imageRendering: 'pixelated', marginLeft: idx > 0 ? '-10%' : '0' }} 
                             referrerPolicy="no-referrer" 
