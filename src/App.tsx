@@ -2281,7 +2281,7 @@ CRITICAL RULES:
       </div>
 
       {/* Mobile Controls */}
-      <div className="absolute bottom-8 left-0 w-full px-8 flex justify-between items-end z-50 md:hidden pointer-events-none">
+      <div className="absolute bottom-8 left-0 w-full px-8 flex justify-between items-end z-50 pointer-events-none">
         {/* D-Pad */}
         <div className="relative w-32 h-32 pointer-events-auto opacity-70">
           <button 
@@ -2326,7 +2326,7 @@ CRITICAL RULES:
       </div>
 
       {/* Controls Hint */}
-      <div className="absolute bottom-4 left-4 text-[10px] text-zinc-500 font-mono hidden md:block">
+      <div className="absolute bottom-4 left-4 text-[10px] text-zinc-500 font-mono block">
         USE ARROW KEYS OR WASD TO MOVE • SPACE TO TALK
       </div>
 
